@@ -35,6 +35,7 @@ const RevealPhase: React.FC<Props> = ({ config, onFinish, t }) => {
     setIsRevealing(true);
   };
 
+  // Uses Gemini API to generate decoy words for the impostor to help them blend in
   const fetchDecoyTips = async () => {
     triggerHaptic();
     playSound.tap();
@@ -57,147 +58,113 @@ const RevealPhase: React.FC<Props> = ({ config, onFinish, t }) => {
             },
             required: ["decoys"]
           }
-        },
+        }
       });
-      
-      const data = JSON.parse(response.text || '{"decoys":[]}');
-      setDecoyTips(data.decoys || []);
+      const data = JSON.parse(response.text || "{}");
+      if (data.decoys) {
+        setDecoyTips(data.decoys);
+      }
     } catch (error) {
-      console.error("Failed to fetch decoy tips:", error);
-      setDecoyTips(["Stay Vague", "Copy Others", "Observe First"]);
+      console.error("Error fetching decoys:", error);
     } finally {
       setIsLoadingTips(false);
     }
   };
 
   const handleNext = () => {
-    triggerHaptic();
     playSound.tap();
+    setIsRevealing(false);
+    setDecoyTips([]);
     if (currentPlayerIndex < config.players.length - 1) {
       setIsTransitioning(true);
       setTimeout(() => {
         setCurrentPlayerIndex(prev => prev + 1);
-        setIsRevealing(false);
         setIsTransitioning(false);
-        setDecoyTips([]);
       }, 300);
     } else {
       onFinish();
     }
   };
 
+  const isLastPlayer = currentPlayerIndex === config.players.length - 1;
+
   return (
-    <div className={`flex-1 flex flex-col items-center justify-center p-4 transition-opacity duration-300 ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}>
-      <div className="text-center mb-8">
-        <h2 className="text-sm text-indigo-400 font-bold uppercase tracking-widest mb-1">
+    <div className={`flex-1 flex flex-col items-center justify-center space-y-8 ${isTransitioning ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}>
+      <div className="text-center space-y-2">
+        <h3 className="text-indigo-400 font-bold tracking-widest uppercase">
           {t.playerOf.replace('{n}', (currentPlayerIndex + 1).toString()).replace('{total}', config.players.length.toString())}
-        </h2>
-        <div className="text-4xl font-extrabold text-white">
-          {currentPlayer.name}
-        </div>
+        </h3>
+        <h2 className="text-4xl font-black">{currentPlayer.name}</h2>
       </div>
 
       {!isRevealing ? (
-        <div className="flex-1 w-full flex flex-col items-center justify-center space-y-8">
-          <div 
+        <div className="w-full space-y-8 animate-in zoom-in duration-300">
+          <button
             onClick={handleReveal}
-            className="w-full aspect-[3/4] max-h-[400px] bg-indigo-600 rounded-[2rem] shadow-2xl flex flex-col items-center justify-center cursor-pointer active:scale-95 transition-all group border-4 border-indigo-400/30"
+            className="w-full aspect-square max-h-[300px] bg-slate-800 rounded-3xl border-4 border-dashed border-slate-700 flex flex-col items-center justify-center gap-4 hover:border-indigo-500 transition-colors group"
           >
-            <div className="text-7xl mb-4 group-hover:scale-110 transition-transform">👀</div>
-            <p className="text-2xl font-bold">{t.tapToReveal}</p>
-            <p className="text-indigo-200 mt-2 text-sm">{t.noPeeking}</p>
-          </div>
-          <p className="text-slate-500 text-center max-w-[250px]">
-            {t.handTo.replace('{name}', currentPlayer.name)}
+            <span className="text-7xl group-hover:scale-110 transition-transform">👁️</span>
+            <span className="text-xl font-bold text-slate-400">{t.tapToReveal}</span>
+          </button>
+          <p className="text-center text-slate-500 font-medium">
+            {t.noPeeking}
           </p>
         </div>
       ) : (
-        <div className="flex-1 w-full flex flex-col items-center justify-center space-y-6 animate-in flip-in-y duration-500 overflow-y-auto custom-scrollbar">
-          <div 
-            className={`w-full shrink-0 aspect-[3/4] max-h-[360px] rounded-[2rem] shadow-2xl flex flex-col items-center justify-center border-4 ${
-              currentPlayer.isImpostor 
-                ? 'bg-red-900/40 border-red-500 shadow-red-900/20' 
-                : 'bg-emerald-900/40 border-emerald-500 shadow-emerald-900/20'
-            }`}
-          >
+        <div className="w-full space-y-8 animate-in flip-in-y duration-500">
+          <div className={`p-10 rounded-[2.5rem] text-center border-4 ${
+            currentPlayer.isImpostor 
+              ? 'bg-red-600/20 border-red-500 shadow-2xl shadow-red-900/40' 
+              : 'bg-indigo-600/20 border-indigo-500 shadow-2xl shadow-indigo-900/40'
+          }`}>
             {currentPlayer.isImpostor ? (
               <>
                 <div className="text-6xl mb-4">😈</div>
-                <h3 className="text-2xl font-black text-red-500 uppercase tracking-tighter">
-                  {t.youAreImpostor}
-                </h3>
-                <h3 className="text-5xl font-black text-white uppercase tracking-tighter">
-                  {t.impostor}
-                </h3>
-                <p className="mt-4 text-red-100 font-medium px-8 text-center text-sm leading-relaxed">
-                  {t.blendIn.replace('{cat}', config.category)}
-                </p>
+                <h4 className="text-red-400 font-bold uppercase tracking-widest">{t.youAreImpostor}</h4>
+                <div className="text-6xl font-black text-white mb-4">{t.impostor}</div>
+                <p className="text-red-300 font-medium">{t.blendIn.replace('{cat}', config.category)}</p>
+                
+                <div className="mt-8 pt-8 border-t border-red-500/30">
+                  {decoyTips.length > 0 ? (
+                    <div className="text-left animate-in fade-in slide-in-from-top duration-300">
+                      <p className="text-xs font-bold text-red-400 uppercase mb-2">{t.decoyTip}</p>
+                      <div className="flex flex-wrap gap-2">
+                        {decoyTips.map((tip, i) => (
+                          <span key={i} className="bg-red-500/30 px-3 py-1 rounded-full text-sm font-bold border border-red-500/50">
+                            {tip}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={fetchDecoyTips}
+                      disabled={isLoadingTips}
+                      className="text-sm font-bold bg-red-600 text-white px-6 py-3 rounded-xl active:scale-95 transition-all disabled:opacity-50"
+                    >
+                      {isLoadingTips ? t.thinkingDecoys : t.getDecoyWords}
+                    </button>
+                  )}
+                </div>
               </>
             ) : (
               <>
-                <div className="text-xs text-emerald-400 font-bold uppercase tracking-widest mb-2">
-                  {t.secretWordLabel}
-                </div>
-                <div className="text-5xl font-black text-white text-center px-4 leading-tight">
-                  {config.secretWord}
-                </div>
-                <p className="mt-6 text-emerald-200 font-medium bg-emerald-900/60 px-4 py-1 rounded-full text-sm">
-                  {t.categoryLabel.replace('{cat}', config.category)}
-                </p>
+                <div className="text-6xl mb-4">💎</div>
+                <h4 className="text-indigo-400 font-bold uppercase tracking-widest">{t.secretWordLabel}</h4>
+                <div className="text-6xl font-black text-white mb-4">{config.secretWord}</div>
+                <p className="text-indigo-300 font-medium">{t.categoryLabel.replace('{cat}', config.category)}</p>
               </>
             )}
           </div>
 
-          {currentPlayer.isImpostor && (
-            <div className="w-full space-y-3 px-2">
-              {decoyTips.length === 0 ? (
-                <button
-                  onClick={fetchDecoyTips}
-                  disabled={isLoadingTips}
-                  className="w-full bg-red-600/20 border-2 border-red-500/50 hover:bg-red-600/30 text-red-200 py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all disabled:opacity-50"
-                >
-                  {isLoadingTips ? (
-                    <span className="flex items-center gap-2">
-                      <svg className="animate-spin h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                      {t.thinkingDecoys}
-                    </span>
-                  ) : (
-                    <>✨ {t.getDecoyWords}</>
-                  )}
-                </button>
-              ) : (
-                <div className="bg-slate-800/80 p-4 rounded-2xl border border-red-500/30 animate-in fade-in slide-in-from-bottom duration-300">
-                  <p className="text-xs text-red-400 font-bold uppercase tracking-widest mb-3 text-center">{t.decoyTip}</p>
-                  <div className="grid grid-cols-3 gap-2">
-                    {decoyTips.map((tip, i) => (
-                      <div key={i} className="bg-slate-900/80 border border-slate-700 py-2 px-1 rounded-lg text-center text-xs font-bold text-white whitespace-nowrap overflow-hidden text-ellipsis">
-                        {tip}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
           <button
             onClick={handleNext}
-            className="w-full bg-slate-100 text-slate-900 py-5 rounded-2xl text-xl font-black shadow-xl active:scale-95 transition-all mt-auto"
+            className="w-full bg-slate-100 text-slate-900 py-6 rounded-2xl text-2xl font-black active:scale-95 transition-all shadow-xl"
           >
-            {t.hideContinue}
+            {isLastPlayer ? t.confirmReveal : t.hideContinue}
           </button>
         </div>
       )}
-
-      <style>{`
-        .flip-in-y {
-          animation: flip-in-y 0.5s ease-out;
-        }
-        @keyframes flip-in-y {
-          from { transform: rotateY(90deg); opacity: 0; }
-          to { transform: rotateY(0deg); opacity: 1; }
-        }
-      `}</style>
     </div>
   );
 };
