@@ -1,15 +1,15 @@
 
 import React, { useState, useCallback, useEffect } from 'react';
-import { GameScreen, Player, GameConfig, Language } from './types';
-import { CATEGORIES } from './constants';
-import { UI_STRINGS } from './i18n';
-import { playSound } from './utils/sounds';
-import HomeScreen from './components/HomeScreen';
-import PlayerSetup from './components/PlayerSetup';
-import GameSettings from './components/GameSettings';
-import RevealPhase from './components/RevealPhase';
-import DiscussionPhase from './components/DiscussionPhase';
-import ResultPhase from './components/ResultPhase';
+import { GameScreen, Player, GameConfig, Language } from './types.ts';
+import { CATEGORIES } from './constants.tsx';
+import { UI_STRINGS } from './i18n.ts';
+import { playSound } from './utils/sounds.ts';
+import HomeScreen from './components/HomeScreen.tsx';
+import PlayerSetup from './components/PlayerSetup.tsx';
+import GameSettings from './components/GameSettings.tsx';
+import RevealPhase from './components/RevealPhase.tsx';
+import DiscussionPhase from './components/DiscussionPhase.tsx';
+import ResultPhase from './components/ResultPhase.tsx';
 
 const App: React.FC = () => {
   const [screen, setScreen] = useState<GameScreen>(GameScreen.HOME);
