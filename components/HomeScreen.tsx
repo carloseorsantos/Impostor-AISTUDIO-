@@ -14,42 +14,51 @@ const HomeScreen: React.FC<Props> = ({ onStart, t }) => {
   };
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-center space-y-12 animate-in fade-in zoom-in duration-500">
-      <div className="text-center space-y-4">
-        <div className="text-8xl mb-4">😈</div>
-        <h1 className="text-6xl font-extrabold tracking-tighter bg-gradient-to-br from-indigo-400 to-purple-600 bg-clip-text text-transparent">
+    <div className="flex-1 flex flex-col items-center justify-around py-4 animate-in fade-in zoom-in duration-500">
+      {/* Hero Section */}
+      <div className="text-center space-y-4 px-4">
+        <div className="relative inline-block">
+          <div className="text-9xl mb-2 drop-shadow-2xl animate-bounce">😈</div>
+          <div className="absolute -bottom-2 -right-2 bg-red-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-lg border-2 border-slate-900">HOT!</div>
+        </div>
+        <h1 className="text-7xl font-black tracking-tighter bg-gradient-to-br from-indigo-400 via-purple-500 to-red-500 bg-clip-text text-transparent">
           {t.appName}
         </h1>
-        <p className="text-slate-400 text-lg font-medium px-4">
+        <p className="text-slate-400 text-lg font-medium max-w-[280px] mx-auto leading-tight">
           {t.tagline}
         </p>
       </div>
 
-      <div className="w-full space-y-4 px-4">
+      {/* Actions */}
+      <div className="w-full space-y-6 px-4 pb-4">
         <button
           onClick={handleStart}
-          className="w-full bg-indigo-600 hover:bg-indigo-500 active:scale-95 transition-all py-6 rounded-2xl text-2xl font-bold shadow-xl shadow-indigo-900/40"
+          className="w-full bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] transition-all py-6 rounded-[2rem] text-2xl font-black shadow-2xl shadow-indigo-600/30 border-b-4 border-indigo-800"
         >
           {t.startGame}
         </button>
         
-        <div className="bg-slate-800/50 p-6 rounded-2xl border border-slate-700">
-          <h2 className="text-indigo-400 font-bold mb-2 flex items-center gap-2">
+        <div className="bg-slate-800/40 backdrop-blur-sm p-6 rounded-[2rem] border border-slate-700/50">
+          <h2 className="text-indigo-400 font-black text-sm uppercase tracking-widest mb-3 flex items-center gap-2">
             <span>📖</span> {t.howToPlay}
           </h2>
-          <ul className="text-sm text-slate-300 space-y-2">
+          <ul className="text-sm text-slate-300 space-y-3">
             {t.rules.map((rule: string, i: number) => (
-              <li key={i} className="flex gap-2">
-                <span className="text-indigo-500 font-bold">{i + 1}.</span>
-                {rule}
+              <li key={i} className="flex gap-3">
+                <span className="flex-shrink-0 w-5 h-5 bg-indigo-900/50 text-indigo-400 rounded-full flex items-center justify-center text-[10px] font-bold border border-indigo-500/30">
+                  {i + 1}
+                </span>
+                <span className="leading-tight">{rule}</span>
               </li>
             ))}
           </ul>
         </div>
-      </div>
 
-      <div className="text-xs text-slate-500 font-medium opacity-50">
-        {t.bestPlayed}
+        <div className="text-center">
+          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest bg-slate-800/30 px-3 py-1 rounded-full border border-slate-700/30">
+            {t.bestPlayed}
+          </span>
+        </div>
       </div>
     </div>
   );

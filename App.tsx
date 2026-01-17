@@ -13,11 +13,25 @@ import ResultPhase from './components/ResultPhase';
 
 const App: React.FC = () => {
   const [screen, setScreen] = useState<GameScreen>(GameScreen.HOME);
-  const [players, setPlayers] = useState<string[]>(['Player 1', 'Player 2', 'Player 3']);
+  const [players, setPlayers] = useState<string[]>([]);
   const [gameConfig, setGameConfig] = useState<GameConfig | null>(null);
-  const [lang, setLang] = useState<Language>('en');
+  
+  // Persistence: Load language from localStorage or default to 'en'
+  const [lang, setLang] = useState<Language>(() => {
+    try {
+      const saved = localStorage.getItem('impostor_lang');
+      return (saved as Language) || 'en';
+    } catch {
+      return 'en';
+    }
+  });
 
   const t = UI_STRINGS[lang];
+
+  // Save language to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('impostor_lang', lang);
+  }, [lang]);
 
   // Play transition sound on screen change
   useEffect(() => {
@@ -31,14 +45,19 @@ const App: React.FC = () => {
     const langData = categoryObj.translations[lang];
     const secretWord = langData.words[Math.floor(Math.random() * langData.words.length)];
     
+    // Create base player objects
     const playerObjects: Player[] = players.map((name, index) => ({
-      id: `p-${index}`,
+      id: `p-${index}-${Date.now()}`,
       name,
       isImpostor: false,
     }));
 
+    // Randomly assign impostors using unique indices
     const indices = Array.from({ length: playerObjects.length }, (_, i) => i);
-    for (let i = 0; i < impostorCount; i++) {
+    // Ensure we don't try to pick more impostors than players (though UI handles this)
+    const finalImpostorCount = Math.min(impostorCount, playerObjects.length - 1);
+    
+    for (let i = 0; i < finalImpostorCount; i++) {
       const randomIndex = Math.floor(Math.random() * indices.length);
       const playerIndex = indices.splice(randomIndex, 1)[0];
       playerObjects[playerIndex].isImpostor = true;
@@ -48,7 +67,7 @@ const App: React.FC = () => {
       players: playerObjects,
       secretWord,
       category: langData.name,
-      impostorCount,
+      impostorCount: finalImpostorCount,
     });
     setScreen(GameScreen.REVEAL);
   }, [players, lang]);
@@ -58,24 +77,26 @@ const App: React.FC = () => {
     setGameConfig(null);
   }, []);
 
-  const LanguageSwitcher = () => (
-    <div className="flex justify-center gap-2 mb-4 animate-in fade-in duration-700">
-      {(['en', 'pt', 'es'] as Language[]).map(l => (
-        <button
-          key={l}
-          onClick={() => {
-            playSound.tap();
-            setLang(l);
-          }}
-          className={`px-3 py-1 rounded-full text-xs font-bold transition-all border ${
-            lang === l 
-              ? 'bg-indigo-600 border-indigo-500 text-white' 
-              : 'bg-slate-800 border-slate-700 text-slate-400'
-          }`}
-        >
-          {l.toUpperCase()}
-        </button>
-      ))}
+  const GlobalLanguageSwitcher = () => (
+    <div className="flex justify-center items-center py-2 px-4 z-50">
+      <div className="flex bg-slate-800/60 backdrop-blur-md p-1 rounded-full border border-slate-700/50 shadow-lg scale-90">
+        {(['en', 'pt', 'es'] as Language[]).map(l => (
+          <button
+            key={l}
+            onClick={() => {
+              playSound.tap();
+              setLang(l);
+            }}
+            className={`px-3 py-1 rounded-full text-[10px] font-black tracking-tighter transition-all ${
+              lang === l 
+                ? 'bg-indigo-600 text-white shadow-md' 
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            {l.toUpperCase()}
+          </button>
+        ))}
+      </div>
     </div>
   );
 
@@ -134,9 +155,13 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col p-4 md:p-8 max-w-lg mx-auto overflow-hidden">
-      {screen === GameScreen.HOME && <LanguageSwitcher />}
-      {renderScreen()}
+    <div className="fixed inset-0 bg-slate-900 text-slate-100 flex flex-col overflow-hidden selection:bg-indigo-500/30">
+      <GlobalLanguageSwitcher />
+      <div className="flex-1 flex flex-col p-4 md:p-6 overflow-y-auto custom-scrollbar">
+        <div className="max-w-lg mx-auto w-full flex-1 flex flex-col">
+          {renderScreen()}
+        </div>
+      </div>
     </div>
   );
 };

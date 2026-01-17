@@ -27,11 +27,8 @@ const RevealPhase: React.FC<Props> = ({ config, onFinish, t }) => {
 
   const handleReveal = () => {
     triggerHaptic();
-    if (currentPlayer.isImpostor) {
-      playSound.revealImpostor();
-    } else {
-      playSound.revealSecret();
-    }
+    // Use the same secret reveal sound for everyone so the Impostor isn't outed by sound
+    playSound.revealSecret();
     setIsRevealing(true);
   };
 

@@ -14,7 +14,8 @@ const ResultPhase: React.FC<Props> = ({ config, onRestart, t }) => {
   const impostors = config.players.filter(p => p.isImpostor);
 
   const handleReveal = () => {
-    playSound.revealImpostor();
+    // Using unified sound for consistency across the entire app
+    playSound.revealSecret();
     setShowIdentity(true);
   };
 
